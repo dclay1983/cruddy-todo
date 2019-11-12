@@ -27,9 +27,13 @@ exports.readAll = (callback) => {
       files.forEach( (file, index) => {
         id = file.split('.')[0];
         exports.readOne(id, (err, todo) => {
-          todos.push(todo);
-          if (index === files.length - 1) {
-            callback(null, todos);
+          if (err) {
+            console.log(`${file} has been moved or deleted.`);
+          } else {
+            todos.push(todo);
+            if (index === files.length - 1) {
+              callback(null, todos);
+            }
           }
         });
       });
