@@ -23,51 +23,56 @@ exports.readAll = (callback) => {
   fs.readdir(exports.dataDir, (err, files) => {
     if (err) {
       callback(new Error(`Error accessing ${datDir}`));
-    } else {
-      files.forEach( file => {
+    } else if (files.length) {
+      files.forEach( (file, index) => {
         id = file.split('.')[0];
-        todo = {
-          id: id,
-          text: id
-        };
-        todos.push(todo);
+        exports.readOne(id, (err, todo) => {
+          todos.push(todo);
+          if (index === files.length - 1) {
+            callback(null, todos);
+          }
+        });
       });
-      callback(null, todos);
+    } else {
+      callback(null, []);
     }
   });
-
 };
 
 exports.readOne = (id, callback) => {
-  file = path.join(exports.dataDir, id, '.txt');
+  file = path.join(exports.dataDir, `${id}.txt`);
   fs.readFile(file, (err, text) => {
     if (err) {
       callback(new Error(`No item with id: ${id}`));
     } else {
-      callback(null, { id, text });
+      callback(null, { id, text: text.toString() });
     }
   });
 };
 
+// writefile w/ r+ flag to ensure file exists
 exports.update = (id, text, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    items[id] = text;
-    callback(null, { id, text });
-  }
+  file = path.join(exports.dataDir, `${id}.txt`);
+  fs.truncate(file, 0, (err) => {
+    if (err) {
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      fs.writeFile(file, text, {flag: 'r+'}, (err) => {
+        callback(null, { id: id, text: text});
+      });
+    }
+  });
 };
 
 exports.delete = (id, callback) => {
-  var item = items[id];
-  delete items[id];
-  if (!item) {
-    // report an error if item not found
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback();
-  }
+  file = path.join(exports.dataDir, `${id}.txt`);
+  fs.unlink(file, (err) => {
+    if (err) {
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      callback();
+    }
+  });
 };
 
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
