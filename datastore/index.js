@@ -1,32 +1,52 @@
 const fs = require('fs');
 const path = require('path');
 const _ = require('underscore');
-const counter = require('./counter');
+const counter = require('./counter.js');
 
 var items = {};
 
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  var id = counter.getNextUniqueId();
-  items[id] = text;
-  callback(null, { id, text });
+  var id = counter.getNextUniqueId( (err, id) => {
+    dataFile = path.join(exports.dataDir, `${id}.txt`);
+    fs.writeFile(dataFile, text, (err) => {
+      items[id] = text;
+      callback(null, { id, text });
+    });
+  });
 };
 
 exports.readAll = (callback) => {
-  var data = _.map(items, (text, id) => {
-    return { id, text };
+  let todos = [];
+  let todo;
+  fs.readdir(exports.dataDir, (err, files) => {
+    if (err) {
+      callback(new Error(`Error accessing ${datDir}`));
+    } else {
+      files.forEach( file => {
+        id = file.split('.')[0];
+        todo = {
+          id: id,
+          text: id
+        };
+        todos.push(todo);
+      });
+      callback(null, todos);
+    }
   });
-  callback(null, data);
+
 };
 
 exports.readOne = (id, callback) => {
-  var text = items[id];
-  if (!text) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback(null, { id, text });
-  }
+  file = path.join(exports.dataDir, id, '.txt');
+  fs.readFile(file, (err, text) => {
+    if (err) {
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      callback(null, { id, text });
+    }
+  });
 };
 
 exports.update = (id, text, callback) => {
